@@ -8,6 +8,16 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body class="bg-gray-50 p-4">
+<!-- 登录遮罩层 -->
+<div id="authOverlay" class="fixed inset-0 bg-slate-900 z-50 flex items-center justify-center p-4">
+    <div class="bg-white p-8 rounded-2xl shadow-xl w-full max-w-md">
+        <h2 class="text-2xl font-bold mb-6 text-center">系统登录</h2>
+        <input type="email" id="authEmail" placeholder="邮箱" class="w-full border p-3 rounded-lg mb-4 outline-none">
+        <input type="password" id="authPassword" placeholder="密码" class="w-full border p-3 rounded-lg mb-6 outline-none">
+        <button onclick="handleLogin()" id="loginBtn" class="w-full bg-blue-600 text-white font-bold py-3 rounded-lg mb-3">登录</button>
+        <p id="authMsg" class="text-red-500 text-xs text-center"></p>
+    </div>
+</div>
 
     <div class="max-w-6xl mx-auto">
         <!-- 顶部统计卡片 -->
@@ -232,7 +242,41 @@ const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZ
             submitBtn.disabled = false;
         };
 
+// 1. 初始化时检查登录状态
+async function checkUser() {
+    const { data: { user } } = await supabaseClient.auth.getUser();
+    if (user) {
+        document.getElementById('authOverlay').classList.add('hidden'); // 隐藏登录框
+        initApp(); // 执行你原来的初始化代码（加载产品和流水）
+    }
+}
+
+// 2. 登录处理
+async function handleLogin() {
+    const email = document.getElementById('authEmail').value;
+    const password = document.getElementById('authPassword').value;
+    const btn = document.getElementById('loginBtn');
+    
+    btn.disabled = true;
+    btn.innerText = '验证中...';
+
+    const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+
+    if (error) {
+        document.getElementById('authMsg').innerText = "登录失败: " + error.message;
+        btn.disabled = false;
+        btn.innerText = '登录';
+    } else {
+        location.reload(); // 登录成功后刷新页面，触发 checkUser
+    }
+}
+
+// 页面加载即检查
+checkUser();
+
         init();
+
+
     </script>
 </body>
 </html>
