@@ -39,17 +39,20 @@
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-semibold text-gray-700">数量</label>
-                            <input type="number" id="quantity" min="1" value="1" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2 border">
+                            <input type="number" id="quantity" min="1" value="1" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2 border"   onfocus="this.select()"
+  onclick="this.select()">
                         </div>
                         <div>
                             <label class="block text-sm font-semibold text-gray-700">单件成本</label>
-                            <input type="number" id="cost" step="0.01" class="mt-1 block w-full border-orange-300 rounded-md shadow-sm p-2 border bg-orange-50 focus:bg-white">
+                            <input type="number" id="cost" step="0.01" class="mt-1 block w-full border-orange-300 rounded-md shadow-sm p-2 border bg-orange-50 focus:bg-white"   onfocus="this.select()"
+  onclick="this.select()">
                         </div>
                     </div>
 
                     <div>
                         <label class="block text-sm font-semibold text-gray-700">订单总金额</label>
-                        <input type="number" id="total" step="0.01" class="mt-1 block w-full border-blue-300 rounded-md shadow-sm p-2 border bg-blue-50 font-bold text-lg focus:bg-white">
+                        <input type="number" id="total" step="0.01" class="mt-1 block w-full border-blue-300 rounded-md shadow-sm p-2 border bg-blue-50 font-bold text-lg focus:bg-white"   onfocus="this.select()"
+  onclick="this.select()">
                     </div>
 
                     <div id="profitPreview" class="p-3 bg-gray-100 rounded text-sm text-center font-bold text-gray-500">
