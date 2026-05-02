@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>销售管理 - 完整功能版</title>
+    <title>销售管理 - 毛利修正版</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
@@ -20,12 +20,8 @@
     </div>
 
     <div class="max-w-6xl mx-auto">
-        <!-- 顶部统计卡片 - 已添加“今日总计” -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <div class="bg-white p-5 rounded-lg shadow border-l-4 border-blue-600 hover:shadow-md transition">
-                <p class="text-gray-500 text-sm font-medium">今日订单总计 (Total Sum)</p>
-                <h2 class="text-2xl font-bold text-blue-600">￥<span id="todayTotalSum">0.00</span></h2>
-            </div>
+        <!-- 顶部统计卡片 -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
             <div class="bg-white p-5 rounded-lg shadow border-l-4 border-green-500 hover:shadow-md transition">
                 <p class="text-gray-500 text-sm font-medium">今日毛利 (Total - Cost)</p>
                 <h2 class="text-2xl font-bold text-gray-800">￥<span id="todayProfit">0.00</span></h2>
@@ -76,7 +72,7 @@
                 </form>
             </div>
 
-            <!-- 数据表格[cite: 1] -->
+            <!-- 数据表格 -->
             <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
                 <div class="p-4 border-b bg-gray-50 flex justify-between items-center">
                     <span class="font-bold text-gray-700">近期销售流水记录</span>
@@ -94,8 +90,7 @@
                                 <th class="px-4 py-3 text-center font-semibold text-red-500">操作</th>
                             </tr>
                         </thead>
-                        <tbody id="salesTableBody" class="divide-y divide-gray-100 bg-white">
-                        </tbody>
+                        <tbody id="salesTableBody" class="divide-y divide-gray-100 bg-white"></tbody>
                     </table>
                 </div>
             </div>
@@ -103,9 +98,9 @@
     </div>
 
     <script>
-        const SUPABASE_URL = "https://dannrjpyjxuptpkitznd.supabase.co";[cite: 1]
-        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhbm5yanB5anh1cHRwa2l0em5kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1OTA3MTMsImV4cCI6MjA5MzE2NjcxM30.i4bWHW-qM2oiXHSNQEv1v89pb7wtLDJZVQ9ib9vGM7w";[cite: 1]
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);[cite: 1]
+        const SUPABASE_URL = "https://dannrjpyjxuptpkitznd.supabase.co";
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhbm5yanB5anh1cHRwa2l0em5kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1OTA3MTMsImV4cCI6MjA5MzE2NjcxM30.i4bWHW-qM2oiXHSNQEv1v89pb7wtLDJZVQ9ib9vGM7w";
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
         const formElements = {
             product: document.getElementById('productSelect'),
@@ -121,26 +116,28 @@
         }
 
         async function loadProducts() {
-            const { data, error } = await supabaseClient.from('products').select('*');[cite: 1]
+            const { data, error } = await supabaseClient.from('products').select('*');
             if (error) return console.error(error);
             formElements.product.innerHTML = '<option value="">-- 选择产品 --</option>' + 
                 data.map(p => `<option value="${p.id}" data-price="${p.price}" data-cost="${p.cost}">${p.name}</option>`).join('');
         }
 
+        // 修改计算逻辑：毛利 = 总计 - 成本
         function updateCalculations() {
-            const currentCost = parseFloat(formElements.cost.value) || 0;[cite: 1]
-            const currentTotal = parseFloat(formElements.total.value) || 0;[cite: 1]
-            const profit = currentTotal - currentCost;[cite: 1]
+            const currentCost = parseFloat(formElements.cost.value) || 0;
+            const currentTotal = parseFloat(formElements.total.value) || 0;
+            const profit = currentTotal - currentCost; // 不再乘以数量
 
-            formElements.preview.innerText = `预期毛利: ￥${profit.toFixed(2)}`;[cite: 1]
-            formElements.preview.className = `p-3 rounded text-sm text-center font-bold ${profit >=0 ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`;[cite: 1]
+            formElements.preview.innerText = `预期毛利: ￥${profit.toFixed(2)}`;
+            formElements.preview.className = `p-3 rounded text-sm text-center font-bold ${profit >=0 ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`;
         }
 
         formElements.product.onchange = () => {
             const opt = formElements.product.options[formElements.product.selectedIndex];
             if(opt.value) {
-                formElements.cost.value = opt.dataset.cost;[cite: 1]
-                formElements.total.value = (opt.dataset.price * formElements.qty.value).toFixed(2);[cite: 1]
+                // 这里默认填入单件成本，用户可根据需要修改为总成本
+                formElements.cost.value = opt.dataset.cost;
+                formElements.total.value = (opt.dataset.price * formElements.qty.value).toFixed(2);
                 updateCalculations();
             }
         };
@@ -150,22 +147,19 @@
         });
 
         async function loadSales() {
-            const { data, error } = await supabaseClient.from('sales').select('*, products(name)').order('created_at', { ascending: false });[cite: 1]
+            const { data, error } = await supabaseClient.from('sales').select('*, products(name)').order('created_at', { ascending: false });
             if (error) return;
 
-            let todayTotal = 0; // 新增今日总额累计[cite: 1]
             let todayP = 0, monthP = 0;
             const now = new Date();
             const todayStr = now.toISOString().split('T')[0];
 
             const rows = data.map(sale => {
-                const orderProfit = sale.total - sale.cost;[cite: 1]
+                // 计算逻辑保持一致：Total - Cost[cite: 1]
+                const orderProfit = sale.total - sale.cost; 
                 const saleDate = new Date(sale.created_at);
                 
-                if (sale.created_at.startsWith(todayStr)) {
-                    todayTotal += parseFloat(sale.total); // 累计今日成交总额[cite: 1]
-                    todayP += orderProfit;
-                }
+                if (sale.created_at.startsWith(todayStr)) todayP += orderProfit;
                 if (saleDate.getMonth() === now.getMonth() && saleDate.getFullYear() === now.getFullYear()) monthP += orderProfit;
 
                 return `
@@ -184,14 +178,13 @@
             });
 
             document.getElementById('salesTableBody').innerHTML = rows.join('');
-            document.getElementById('todayTotalSum').innerText = todayTotal.toLocaleString(undefined, {minimumFractionDigits: 2}); // 更新 UI[cite: 1]
-            document.getElementById('todayProfit').innerText = todayP.toLocaleString(undefined, {minimumFractionDigits: 2});[cite: 1]
-            document.getElementById('monthProfit').innerText = monthP.toLocaleString(undefined, {minimumFractionDigits: 2});[cite: 1]
+            document.getElementById('todayProfit').innerText = todayP.toLocaleString(undefined, {minimumFractionDigits: 2});
+            document.getElementById('monthProfit').innerText = monthP.toLocaleString(undefined, {minimumFractionDigits: 2});
         }
 
         async function deleteSale(saleId) {
             if (!confirm('确定要永久删除这条销售记录吗？')) return;
-            const { error } = await supabaseClient.from('sales').delete().eq('id', saleId);[cite: 1]
+            const { error } = await supabaseClient.from('sales').delete().eq('id', saleId);
             if (error) alert('删除失败: ' + error.message); else await loadSales();
         }
 
@@ -203,8 +196,8 @@
             const { error } = await supabaseClient.from('sales').insert([{
                 product_id: formElements.product.value,
                 quantity: parseInt(formElements.qty.value),
-                cost: parseFloat(formElements.cost.value),[cite: 1]
-                total: parseFloat(formElements.total.value)[cite: 1]
+                cost: parseFloat(formElements.cost.value), // 将输入框的 cost 存入字段[cite: 1]
+                total: parseFloat(formElements.total.value)
             }]);
 
             if (error) alert(error.message);
@@ -218,7 +211,7 @@
         };
 
         async function checkUser() {
-            const { data: { user } } = await supabaseClient.auth.getUser();[cite: 1]
+            const { data: { user } } = await supabaseClient.auth.getUser();
             if (user) {
                 document.getElementById('authOverlay').classList.add('hidden');
                 initApp();
@@ -230,7 +223,7 @@
             const password = document.getElementById('authPassword').value;
             const btn = document.getElementById('loginBtn');
             btn.disabled = true; btn.innerText = '验证中...';
-            const { error } = await supabaseClient.auth.signInWithPassword({ email, password });[cite: 1]
+            const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
             if (error) { document.getElementById('authMsg').innerText = "失败: " + error.message; btn.disabled = false; btn.innerText = '登录'; }
             else { location.reload(); }
         }
