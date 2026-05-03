@@ -3,39 +3,37 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>销售管理 - 简洁版</title>
+    <title>销售管理系统 - 移动端优化版</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
-<body class="bg-gray-50 p-4">
+<body class="bg-gray-50 p-2 md:p-4">
 
     <div class="max-w-6xl mx-auto">
-        <!-- 顶部统计卡片 -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <div class="bg-white p-5 rounded-lg shadow border-l-4 border-blue-600 hover:shadow-md transition">
-                <p class="text-gray-500 text-sm font-medium">今日订单总计</p>
-                <h2 class="text-2xl font-bold text-blue-600">￥<span id="todayTotalSum">0.00</span></h2>
+        <!-- 顶部统计卡片：手机端 grid-cols-3 强制一排显示 -->
+        <div class="grid grid-cols-3 gap-1 md:gap-4 mb-6">
+            <div class="bg-white p-2 md:p-5 rounded shadow border-l-2 md:border-l-4 border-blue-600">
+                <p class="text-gray-50 text-[10px] md:text-sm font-medium text-gray-500 truncate">今日订单</p>
+                <h2 class="text-sm md:text-2xl font-bold text-blue-600">￥<span id="todayTotalSum">0.00</span></h2>
             </div>
-            <div class="bg-white p-5 rounded-lg shadow border-l-4 border-green-500 hover:shadow-md transition">
-                <p class="text-gray-500 text-sm font-medium">今日毛利 (Total-Cost)</p>
-                <h2 class="text-2xl font-bold text-gray-800">￥<span id="todayProfit">0.00</span></h2>
+            <div class="bg-white p-2 md:p-5 rounded shadow border-l-2 md:border-l-4 border-green-500">
+                <p class="text-gray-50 text-[10px] md:text-sm font-medium text-gray-500 truncate">今日毛利</p>
+                <h2 class="text-sm md:text-2xl font-bold text-gray-800">￥<span id="todayProfit">0.00</span></h2>
             </div>
-            <div class="bg-white p-5 rounded-lg shadow border-l-4 border-indigo-500 hover:shadow-md transition">
-                <p class="text-gray-500 text-sm font-medium">本月毛利 (Total-Cost)</p>
-                <h2 class="text-2xl font-bold text-gray-800">￥<span id="monthProfit">0.00</span></h2>
+            <div class="bg-white p-2 md:p-5 rounded shadow border-l-2 md:border-l-4 border-indigo-500">
+                <p class="text-gray-50 text-[10px] md:text-sm font-medium text-gray-500 truncate">本月毛利</p>
+                <h2 class="text-sm md:text-2xl font-bold text-gray-800">￥<span id="monthProfit">0.00</span></h2>
             </div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <!-- 录入表单 -->
-            <div class="bg-white p-6 rounded-xl shadow-sm border border-gray-200">
-                <h3 class="text-lg font-bold mb-4 flex items-center text-gray-700">
-                    <span class="mr-2">📝</span> 销售录入
-                </h3>
+            <div class="bg-white p-4 md:p-6 rounded-xl shadow-sm border border-gray-200">
+                <h3 class="text-lg font-bold mb-4 flex items-center text-gray-700">📝 销售录入</h3>
                 <form id="salesForm" class="space-y-4">
                     <div>
                         <label class="block text-sm font-semibold text-gray-700">选择产品</label>
-                        <select id="productSelect" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2 bg-gray-50 border focus:ring-2 focus:ring-blue-500" required>
+                        <select id="productSelect" class="mt-1 block w-full border-gray-300 rounded-md p-2 bg-gray-50 border focus:ring-2 focus:ring-blue-500" required>
                             <option value="">正在连接数据库...</option>
                         </select>
                     </div>
@@ -43,45 +41,41 @@
                     <div class="grid grid-cols-2 gap-4">
                         <div>
                             <label class="block text-sm font-semibold text-gray-700">数量</label>
-                            <input type="number" id="quantity" min="1" value="1" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm p-2 border" onfocus="this.select()">
+                            <input type="number" id="quantity" min="1" value="1" class="mt-1 block w-full border-gray-300 rounded-md p-2 border" onfocus="this.select()">
                         </div>
                         <div>
-                            <label class="block text-sm font-semibold text-gray-700">总成本 (Cost)</label>
-                            <input type="number" id="cost" step="0.01" class="mt-1 block w-full border-orange-300 rounded-md shadow-sm p-2 border bg-orange-50 focus:bg-white" onfocus="this.select()">
+                            <label class="block text-sm font-semibold text-gray-700">总成本 (Auto)</label>
+                            <input type="number" id="cost" step="0.01" class="mt-1 block w-full border-orange-300 rounded-md p-2 border bg-orange-50 focus:bg-white" onfocus="this.select()">
                         </div>
                     </div>
 
                     <div>
-                        <label class="block text-sm font-semibold text-gray-700">订单总额 (Total)</label>
-                        <input type="number" id="total" step="0.01" class="mt-1 block w-full border-blue-300 rounded-md shadow-sm p-2 border bg-blue-50 font-bold text-lg focus:bg-white" onfocus="this.select()">
+                        <label class="block text-sm font-semibold text-gray-700">订单总金额 (Auto)</label>
+                        <input type="number" id="total" step="0.01" class="mt-1 block w-full border-blue-300 rounded-md p-2 border bg-blue-50 font-bold text-lg focus:bg-white" onfocus="this.select()">
                     </div>
 
-                    <div id="profitPreview" class="p-3 bg-gray-100 rounded text-sm text-center font-bold text-gray-500">
-                        预期毛利: ￥0.00
-                    </div>
+                    <div id="profitPreview" class="p-3 bg-gray-100 rounded text-sm text-center font-bold text-gray-500">预期毛利: ￥0.00</div>
 
-                    <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition-colors shadow-lg active:scale-95">
-                        确认提交订单
-                    </button>
+                    <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 active:scale-95 shadow-lg">确认提交订单</button>
                 </form>
             </div>
 
             <!-- 数据表格 -->
             <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
                 <div class="p-4 border-b bg-gray-50 flex justify-between items-center">
-                    <span class="font-bold text-gray-700">近期销售流水记录</span>
+                    <span class="font-bold text-gray-700">本月销售流水</span>
                     <button onclick="loadSales()" class="text-xs text-blue-600 hover:underline">刷新数据</button>
                 </div>
-                <div class="overflow-x-auto overflow-y-auto max-h-[600px]">
+                <div class="overflow-x-auto overflow-y-auto max-h-[500px]">
                     <table class="min-w-full divide-y divide-gray-200 text-sm">
                         <thead class="bg-gray-100 sticky top-0 z-10 text-gray-600">
                             <tr>
-                                <th class="px-4 py-3 text-left font-semibold">日期</th>
-                                <th class="px-4 py-3 text-left font-semibold">产品</th>
-                                <th class="px-4 py-3 text-left font-semibold text-center">数量</th>
-                                <th class="px-4 py-3 text-left font-semibold text-center">总额</th>
-                                <th class="px-4 py-3 text-left font-semibold text-center">毛利</th>
-                                <th class="px-4 py-3 text-center font-semibold text-red-500">操作</th>
+                                <th class="px-2 py-3 text-left">日期</th>
+                                <th class="px-2 py-3 text-left">产品</th>
+                                <th class="px-2 py-3 text-center">数量</th>
+                                <th class="px-2 py-3 text-center">总额</th>
+                                <th class="px-2 py-3 text-center">毛利</th>
+                                <th class="px-2 py-3 text-center">删</th>
                             </tr>
                         </thead>
                         <tbody id="salesTableBody" class="divide-y divide-gray-100 bg-white"></tbody>
@@ -116,61 +110,81 @@
                 data.map(p => `<option value="${p.id}" data-price="${p.price}" data-cost="${p.cost}">${p.name}</option>`).join('');
         }
 
-        // 修改计算逻辑：毛利 = 总计 - 成本[cite: 3]
         function updateCalculations() {
             const currentCost = parseFloat(formElements.cost.value) || 0;
             const currentTotal = parseFloat(formElements.total.value) || 0;
-            const profit = currentTotal - currentCost; 
+            const profit = currentTotal - currentCost;
 
             formElements.preview.innerText = `预期毛利: ￥${profit.toFixed(2)}`;
             formElements.preview.className = `p-3 rounded text-sm text-center font-bold ${profit >=0 ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`;
         }
 
-        formElements.product.onchange = () => {
+        formElements.qty.oninput = () => {
             const opt = formElements.product.options[formElements.product.selectedIndex];
-            if(opt.value) {
-                // 默认填入产品预设成本，用户可以自行修改
-                formElements.cost.value = opt.dataset.cost;
-                formElements.total.value = (opt.dataset.price * formElements.qty.value).toFixed(2);
+            if (opt && opt.value) {
+                const quantity = parseInt(formElements.qty.value) || 0;
+                const unitCost = parseFloat(opt.dataset.cost) || 0;
+                const unitPrice = parseFloat(opt.dataset.price) || 0;
+
+                formElements.cost.value = (unitCost * quantity).toFixed(2);
+                formElements.total.value = (unitPrice * quantity).toFixed(2);
                 updateCalculations();
             }
         };
 
-        [formElements.qty, formElements.cost, formElements.total].forEach(el => {
-            el.oninput = updateCalculations;
-        });
+        formElements.product.onchange = () => {
+            const opt = formElements.product.options[formElements.product.selectedIndex];
+            if(opt.value) {
+                formElements.qty.value = 1;
+                formElements.qty.oninput(); 
+            }
+        };
+
+        [formElements.cost, formElements.total].forEach(el => el.oninput = updateCalculations);
 
         async function loadSales() {
-            const { data, error } = await supabaseClient.from('sales').select('*, products(name)').order('created_at', { ascending: false });
+            const now = new Date();
+            const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+            
+            // 解决时区问题的日期判断
+            const localDate = new Date();
+            const todayStr = localDate.getFullYear() + '-' + 
+                           String(localDate.getMonth() + 1).padStart(2, '0') + '-' + 
+                           String(localDate.getDate()).padStart(2, '0');
+
+            const { data, error } = await supabaseClient
+                .from('sales')
+                .select('*, products(name)')
+                .gte('created_at', firstDayOfMonth)
+                .order('created_at', { ascending: false });
+
             if (error) return;
 
             let todayTotalSum = 0, todayP = 0, monthP = 0;
-            const now = new Date();
-            const todayStr = now.toISOString().split('T')[0];
 
             const rows = data.map(sale => {
-                // 计算逻辑：Total - Cost[cite: 3]
-                const orderProfit = sale.total - sale.cost; 
+                const orderProfit = sale.total - sale.cost;
                 const saleDate = new Date(sale.created_at);
                 
-                if (sale.created_at.startsWith(todayStr)) {
+                // 将数据库UTC时间转为本地日期字符串对比，解决“统计昨日”的问题
+                const saleLocalDay = saleDate.getFullYear() + '-' + 
+                                   String(saleDate.getMonth() + 1).padStart(2, '0') + '-' + 
+                                   String(saleDate.getDate()).padStart(2, '0');
+                
+                if (saleLocalDay === todayStr) {
                     todayTotalSum += parseFloat(sale.total);
                     todayP += orderProfit;
                 }
-                if (saleDate.getMonth() === now.getMonth() && saleDate.getFullYear() === now.getFullYear()) monthP += orderProfit;
+                monthP += orderProfit;
 
                 return `
-                    <tr class="hover:bg-gray-50 border-b last:border-0">
-                        <td class="px-4 py-3 text-xs text-gray-400 font-mono">${saleDate.toLocaleString('zh-CN', {month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit'})}</td>
-                        <td class="px-4 py-3 font-medium text-gray-700">${sale.products?.name || '已失效'}</td>
-                        <td class="px-4 py-3 text-center">${sale.quantity}</td>
-                        <td class="px-4 py-3 text-center font-bold text-blue-600">￥${parseFloat(sale.total).toFixed(2)}</td>
-                        <td class="px-4 py-3 text-center font-bold ${orderProfit >=0 ? 'text-green-600' : 'text-red-600'}">￥${orderProfit.toFixed(2)}</td>
-                        <td class="px-4 py-3 text-center">
-                            <button onclick="deleteSale(${sale.id})" class="text-red-400 hover:text-red-600 p-1 rounded hover:bg-red-50 transition">
-                                <svg class="w-5 h-5 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                            </button>
-                        </td>
+                    <tr class="hover:bg-gray-50 border-b">
+                        <td class="px-2 py-3 text-[10px] text-gray-400 font-mono">${saleDate.toLocaleString('zh-CN', {month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit'})}</td>
+                        <td class="px-2 py-3 font-medium text-gray-700">${sale.products?.name || '已失效'}</td>
+                        <td class="px-2 py-3 text-center">${sale.quantity}</td>
+                        <td class="px-2 py-3 text-center font-bold text-blue-600">￥${parseFloat(sale.total).toFixed(2)}</td>
+                        <td class="px-2 py-3 text-center font-bold ${orderProfit >=0 ? 'text-green-600' : 'text-red-600'}">￥${orderProfit.toFixed(2)}</td>
+                        <td class="px-2 py-3 text-center"><button onclick="deleteSale(${sale.id})" class="text-red-400">删</button></td>
                     </tr>`;
             });
 
@@ -188,10 +202,9 @@
 
         document.getElementById('salesForm').onsubmit = async (e) => {
             e.preventDefault();
-            const submitBtn = e.target.querySelector('button');
-            submitBtn.disabled = true;
+            const btn = e.target.querySelector('button');
+            btn.disabled = true;
 
-            // 将表单 cost 存入 sales 表的 cost 字段[cite: 3]
             const { error } = await supabaseClient.from('sales').insert([{
                 product_id: formElements.product.value,
                 quantity: parseInt(formElements.qty.value),
@@ -199,14 +212,11 @@
                 total: parseFloat(formElements.total.value)
             }]);
 
-            if (error) alert(error.message);
-            else {
-                document.getElementById('salesForm').reset();
-                formElements.preview.innerText = "预期毛利: ￥0.00";
-                formElements.preview.className = "p-3 rounded text-sm text-center font-bold text-gray-500";
+            if (!error) {
+                e.target.reset();
                 await loadSales();
             }
-            submitBtn.disabled = false;
+            btn.disabled = false;
         };
 
         init();
