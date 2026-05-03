@@ -3,89 +3,128 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>销售管理系统 - 移动端优化版</title>
+    <title>销售管理 - 导航版</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        .active-tab { border-bottom: 3px solid #2563eb; color: #2563eb; font-weight: bold; }
+        .view-section { display: none; }
+        .view-section.active { display: block; }
+        input[type="date"] { appearance: none; }
+    </style>
 </head>
-<body class="bg-gray-50 p-2 md:p-4">
+<body class="bg-gray-50 text-gray-800 pb-20 md:pb-4">
 
-    <div class="max-w-6xl mx-auto">
-        <!-- 顶部统计卡片：手机端 grid-cols-3 强制一排显示 -->
-        <div class="grid grid-cols-3 gap-1 md:gap-4 mb-6">
-            <div class="bg-white p-2 md:p-5 rounded shadow border-l-2 md:border-l-4 border-blue-600">
-                <p class="text-gray-50 text-[10px] md:text-sm font-medium text-gray-500 truncate">今日订单</p>
-                <h2 class="text-sm md:text-2xl font-bold text-blue-600">￥<span id="todayTotalSum">0.00</span></h2>
+    <!-- 登录模块 (保持不变) -->
+    <div id="loginModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm hidden">
+        <div class="bg-white p-8 rounded-2xl shadow-2xl w-80">
+            <h2 class="text-xl font-bold mb-6 text-center">身份验证</h2>
+            <div class="space-y-4">
+                <input type="email" id="email" placeholder="账号" class="w-full border p-3 rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
+                <input type="password" id="password" placeholder="密码" class="w-full border p-3 rounded-lg outline-none focus:ring-2 focus:ring-blue-500">
+                <button onclick="handleLogin()" id="loginBtn" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold">登录</button>
             </div>
-            <div class="bg-white p-2 md:p-5 rounded shadow border-l-2 md:border-l-4 border-green-500">
-                <p class="text-gray-50 text-[10px] md:text-sm font-medium text-gray-500 truncate">今日毛利</p>
-                <h2 class="text-sm md:text-2xl font-bold text-gray-800">￥<span id="todayProfit">0.00</span></h2>
-            </div>
-            <div class="bg-white p-2 md:p-5 rounded shadow border-l-2 md:border-l-4 border-indigo-500">
-                <p class="text-gray-50 text-[10px] md:text-sm font-medium text-gray-500 truncate">本月毛利</p>
-                <h2 class="text-sm md:text-2xl font-bold text-gray-800">￥<span id="monthProfit">0.00</span></h2>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <!-- 录入表单 -->
-            <div class="bg-white p-4 md:p-6 rounded-xl shadow-sm border border-gray-200">
-                <h3 class="text-lg font-bold mb-4 flex items-center text-gray-700">📝 销售录入</h3>
-                <form id="salesForm" class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700">选择产品</label>
-                        <select id="productSelect" class="mt-1 block w-full border-gray-300 rounded-md p-2 bg-gray-50 border focus:ring-2 focus:ring-blue-500" required>
-                            <option value="">正在连接数据库...</option>
-                        </select>
-                    </div>
-                    
-                    <div class="grid grid-cols-2 gap-4">
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700">数量</label>
-                            <input type="number" id="quantity" min="1" value="1" class="mt-1 block w-full border-gray-300 rounded-md p-2 border" onfocus="this.select()">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-semibold text-gray-700">总成本 (Auto)</label>
-                            <input type="number" id="cost" step="0.01" class="mt-1 block w-full border-orange-300 rounded-md p-2 border bg-orange-50 focus:bg-white" onfocus="this.select()">
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-semibold text-gray-700">订单总金额 (Auto)</label>
-                        <input type="number" id="total" step="0.01" class="mt-1 block w-full border-blue-300 rounded-md p-2 border bg-blue-50 font-bold text-lg focus:bg-white" onfocus="this.select()">
-                    </div>
-
-                    <div id="profitPreview" class="p-3 bg-gray-100 rounded text-sm text-center font-bold text-gray-500">预期毛利: ￥0.00</div>
-
-                    <button type="submit" class="w-full bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 active:scale-95 shadow-lg">确认提交订单</button>
-                </form>
-            </div>
-
-            <!-- 数据表格 -->
-            <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden flex flex-col">
-                <div class="p-4 border-b bg-gray-50 flex justify-between items-center">
-                    <span class="font-bold text-gray-700">本月销售流水</span>
-                    <button onclick="loadSales()" class="text-xs text-blue-600 hover:underline">刷新数据</button>
-                </div>
-                <div class="overflow-x-auto overflow-y-auto max-h-[500px]">
-                    <table class="min-w-full divide-y divide-gray-200 text-sm">
-                        <thead class="bg-gray-100 sticky top-0 z-10 text-gray-600">
-                            <tr>
-                                <th class="px-2 py-3 text-left">日期</th>
-                                <th class="px-2 py-3 text-left">产品</th>
-                                <th class="px-2 py-3 text-center">数量</th>
-                                <th class="px-2 py-3 text-center">总额</th>
-                                <th class="px-2 py-3 text-center">毛利</th>
-                                <th class="px-2 py-3 text-center">删</th>
-                            </tr>
-                        </thead>
-                        <tbody id="salesTableBody" class="divide-y divide-gray-100 bg-white"></tbody>
-                    </table>
-                </div>
-            </div>
+            <p id="loginError" class="text-red-500 text-xs mt-4 text-center"></p>
         </div>
     </div>
 
+    <!-- 主界面 -->
+    <div id="mainContent" class="max-w-4xl mx-auto hidden">
+        
+        <!-- 顶部固定统计 & 导航 -->
+        <div class="sticky top-0 z-40 bg-white shadow-sm border-b">
+            <div class="grid grid-cols-3 gap-1 p-2 md:p-4 text-center border-b bg-gray-50/50">
+                <div><p class="text-[10px] text-gray-500">今日</p><p class="font-bold text-blue-600 text-sm">￥<span id="todayTotalSum">0</span></p></div>
+                <div><p class="text-[10px] text-gray-500">今日利</p><p class="font-bold text-green-600 text-sm">￥<span id="todayProfit">0</span></p></div>
+                <div><p class="text-[10px] text-gray-500">本月利</p><p class="font-bold text-indigo-600 text-sm">￥<span id="monthProfit">0</span></p></div>
+            </div>
+            <!-- 导航标签 -->
+            <nav class="flex justify-around bg-white">
+                <button onclick="switchTab('entry')" id="tab-entry" class="flex-1 py-3 text-sm active-tab">销售录入</button>
+                <button onclick="switchTab('list')" id="tab-list" class="flex-1 py-3 text-sm">流水明细</button>
+                <button onclick="switchTab('report')" id="tab-report" class="flex-1 py-3 text-sm">报表中心</button>
+            </nav>
+        </div>
+
+        <div class="p-4">
+            <!-- 1. 录入视图 -->
+            <section id="view-entry" class="view-section active">
+                <div class="bg-white p-6 rounded-xl shadow-sm border">
+                    <form id="salesForm" class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-semibold">选择产品</label>
+                            <select id="productSelect" class="mt-1 block w-full border-gray-300 rounded-md p-3 bg-gray-50 border text-lg" required></select>
+                        </div>
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-semibold">数量</label>
+                                <input type="number" id="quantity" min="1" value="1" class="mt-1 block w-full p-3 border rounded-md text-center text-xl font-bold" onfocus="this.select()">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-orange-600">总成本</label>
+                                <input type="number" id="cost" step="0.01" class="mt-1 block w-full p-3 border rounded-md bg-orange-50 text-center font-bold">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-blue-600">订单总金额</label>
+                            <input type="number" id="total" step="0.01" class="mt-1 block w-full p-4 border rounded-md bg-blue-50 text-center text-2xl font-bold">
+                        </div>
+                        <div id="profitPreview" class="p-4 rounded-lg text-center font-bold text-lg bg-gray-100">预期毛利: ￥0.00</div>
+                        <button type="submit" class="w-full bg-blue-600 text-white py-4 rounded-xl font-bold text-lg shadow-lg active:scale-95">确认提交</button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- 2. 流水视图 -->
+            <section id="view-list" class="view-section">
+                <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
+                    <table class="min-w-full text-sm">
+                        <thead class="bg-gray-100">
+                            <tr>
+                                <th class="px-2 py-3 text-left">产品/时间</th>
+                                <th class="px-2 py-3 text-center">数</th>
+                                <th class="px-2 py-3 text-right">金额/毛利</th>
+                                <th class="px-2 py-3 text-center">删</th>
+                            </tr>
+                        </thead>
+                        <tbody id="salesTableBody" class="divide-y"></tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- 3. 报表视图 -->
+            <section id="view-report" class="view-section">
+                <div class="space-y-4">
+                    <div class="bg-white p-4 rounded-xl border shadow-sm">
+                        <div class="grid grid-cols-2 gap-2 mb-3">
+                            <input type="date" id="startDate" class="border p-2 rounded text-sm w-full">
+                            <input type="date" id="endDate" class="border p-2 rounded text-sm w-full">
+                        </div>
+                        <button onclick="generateReport()" class="w-full bg-indigo-600 text-white py-3 rounded-lg font-bold">查询时间段汇总</button>
+                    </div>
+                    
+                    <div id="reportResult" class="hidden space-y-4">
+                        <div class="bg-white p-4 rounded-xl border shadow-sm">
+                            <h4 class="font-bold border-b pb-2 mb-2 flex justify-between"><span>日期汇总</span><span id="dateReportTotal" class="text-green-600"></span></h4>
+                            <div id="dateReportBody" class="space-y-2 text-sm"></div>
+                        </div>
+                        <div class="bg-white p-4 rounded-xl border shadow-sm">
+                            <h4 class="font-bold border-b pb-2 mb-2">产品毛利排行</h4>
+                            <div id="productReportBody" class="space-y-2 text-sm"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </div>
+
+    <!-- 底部退出按钮 (仅手机端可见) -->
+    <button onclick="handleLogout()" class="fixed bottom-4 right-4 bg-gray-800 text-white p-3 rounded-full shadow-xl opacity-50 hover:opacity-100 z-50">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </button>
+
     <script>
+        // Supabase 配置
         const SUPABASE_URL = "https://dannrjpyjxuptpkitznd.supabase.co";
         const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhbm5yanB5anh1cHRwa2l0em5kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1OTA3MTMsImV4cCI6MjA5MzE2NjcxM30.i4bWHW-qM2oiXHSNQEv1v89pb7wtLDJZVQ9ib9vGM7w";
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -98,128 +137,132 @@
             preview: document.getElementById('profitPreview')
         };
 
-        async function init() {
-            await loadProducts();
-            await loadSales();
+        // --- 视图切换 ---
+        function switchTab(tabId) {
+            document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('nav button').forEach(b => b.classList.remove('active-tab'));
+            
+            document.getElementById('view-' + tabId).classList.add('active');
+            document.getElementById('tab-' + tabId).classList.add('active-tab');
+            
+            if (tabId === 'list') loadSales();
         }
 
-        async function loadProducts() {
-            const { data, error } = await supabaseClient.from('products').select('*');
-            if (error) return console.error(error);
-            formElements.product.innerHTML = '<option value="">-- 选择产品 --</option>' + 
+        // --- 权限逻辑 ---
+        async function checkUser() {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (session) {
+                document.getElementById('loginModal').classList.add('hidden');
+                document.getElementById('mainContent').classList.remove('hidden');
+                init();
+            } else {
+                document.getElementById('loginModal').classList.remove('hidden');
+                document.getElementById('mainContent').classList.add('hidden');
+            }
+        }
+
+        async function handleLogin() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+            if (error) alert("登录失败：" + error.message); else checkUser();
+        }
+
+        async function handleLogout() { await supabaseClient.auth.signOut(); checkUser(); }
+
+        // --- 业务逻辑 ---
+        async function init() {
+            const { data } = await supabaseClient.from('products').select('*');
+            formElements.product.innerHTML = '<option value="">选择产品...</option>' + 
                 data.map(p => `<option value="${p.id}" data-price="${p.price}" data-cost="${p.cost}">${p.name}</option>`).join('');
+            loadSales();
         }
 
         function updateCalculations() {
-            const currentCost = parseFloat(formElements.cost.value) || 0;
-            const currentTotal = parseFloat(formElements.total.value) || 0;
-            const profit = currentTotal - currentCost;
-
-            formElements.preview.innerText = `预期毛利: ￥${profit.toFixed(2)}`;
-            formElements.preview.className = `p-3 rounded text-sm text-center font-bold ${profit >=0 ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`;
+            const p = (parseFloat(formElements.total.value) || 0) - (parseFloat(formElements.cost.value) || 0);
+            formElements.preview.innerText = `预期毛利: ￥${p.toFixed(2)}`;
+            formElements.preview.className = `p-4 rounded-lg text-center font-bold text-lg ${p >=0 ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`;
         }
 
         formElements.qty.oninput = () => {
             const opt = formElements.product.options[formElements.product.selectedIndex];
             if (opt && opt.value) {
-                const quantity = parseInt(formElements.qty.value) || 0;
-                const unitCost = parseFloat(opt.dataset.cost) || 0;
-                const unitPrice = parseFloat(opt.dataset.price) || 0;
-
-                formElements.cost.value = (unitCost * quantity).toFixed(2);
-                formElements.total.value = (unitPrice * quantity).toFixed(2);
+                const q = parseInt(formElements.qty.value) || 0;
+                formElements.cost.value = (parseFloat(opt.dataset.cost) * q).toFixed(2);
+                formElements.total.value = (parseFloat(opt.dataset.price) * q).toFixed(2);
                 updateCalculations();
             }
         };
-
-        formElements.product.onchange = () => {
-            const opt = formElements.product.options[formElements.product.selectedIndex];
-            if(opt.value) {
-                formElements.qty.value = 1;
-                formElements.qty.oninput(); 
-            }
-        };
-
+        formElements.product.onchange = () => { if(formElements.product.value) { formElements.qty.value = 1; formElements.qty.oninput(); } };
         [formElements.cost, formElements.total].forEach(el => el.oninput = updateCalculations);
 
         async function loadSales() {
-            const now = new Date();
-            const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-            
-            // 解决时区问题的日期判断
-            const localDate = new Date();
-            const todayStr = localDate.getFullYear() + '-' + 
-                           String(localDate.getMonth() + 1).padStart(2, '0') + '-' + 
-                           String(localDate.getDate()).padStart(2, '0');
-
-            const { data, error } = await supabaseClient
-                .from('sales')
-                .select('*, products(name)')
-                .gte('created_at', firstDayOfMonth)
-                .order('created_at', { ascending: false });
-
+            const firstDay = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
+            const todayStr = new Date().toLocaleDateString('zh-CN').replace(/\//g, '-');
+            const { data, error } = await supabaseClient.from('sales').select('*, products(name)').gte('created_at', firstDay).order('created_at', { ascending: false });
             if (error) return;
 
-            let todayTotalSum = 0, todayP = 0, monthP = 0;
-
+            let todaySum = 0, todayP = 0, monthP = 0;
             const rows = data.map(sale => {
-                const orderProfit = sale.total - sale.cost;
+                const profit = sale.total - sale.cost;
                 const saleDate = new Date(sale.created_at);
-                
-                // 将数据库UTC时间转为本地日期字符串对比，解决“统计昨日”的问题
-                const saleLocalDay = saleDate.getFullYear() + '-' + 
-                                   String(saleDate.getMonth() + 1).padStart(2, '0') + '-' + 
-                                   String(saleDate.getDate()).padStart(2, '0');
-                
-                if (saleLocalDay === todayStr) {
-                    todayTotalSum += parseFloat(sale.total);
-                    todayP += orderProfit;
-                }
-                monthP += orderProfit;
+                const saleDay = saleDate.toLocaleDateString('zh-CN').replace(/\//g, '-');
+                if (saleDay === todayStr) { todaySum += sale.total; todayP += profit; }
+                monthP += profit;
 
-                return `
-                    <tr class="hover:bg-gray-50 border-b">
-                        <td class="px-2 py-3 text-[10px] text-gray-400 font-mono">${saleDate.toLocaleString('zh-CN', {month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit'})}</td>
-                        <td class="px-2 py-3 font-medium text-gray-700">${sale.products?.name || '已失效'}</td>
-                        <td class="px-2 py-3 text-center">${sale.quantity}</td>
-                        <td class="px-2 py-3 text-center font-bold text-blue-600">￥${parseFloat(sale.total).toFixed(2)}</td>
-                        <td class="px-2 py-3 text-center font-bold ${orderProfit >=0 ? 'text-green-600' : 'text-red-600'}">￥${orderProfit.toFixed(2)}</td>
-                        <td class="px-2 py-3 text-center"><button onclick="deleteSale(${sale.id})" class="text-red-400">删</button></td>
-                    </tr>`;
+                return `<tr class="border-b">
+                    <td class="p-3">
+                        <div class="font-bold text-gray-700">${sale.products?.name}</div>
+                        <div class="text-[10px] text-gray-400 font-mono">${saleDate.toLocaleString('zh-CN',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'})}</div>
+                    </td>
+                    <td class="text-center font-bold text-lg">${sale.quantity}</td>
+                    <td class="text-right p-3">
+                        <div class="text-blue-600 font-bold">￥${sale.total.toFixed(2)}</div>
+                        <div class="text-xs ${profit>=0?'text-green-600':'text-red-600'}">利: ${profit.toFixed(2)}</div>
+                    </td>
+                    <td class="text-center"><button onclick="deleteSale(${sale.id})" class="text-red-400 p-2">删</button></td>
+                </tr>`;
+            });
+            document.getElementById('salesTableBody').innerHTML = rows.join('');
+            document.getElementById('todayTotalSum').innerText = todaySum.toFixed(0);
+            document.getElementById('todayProfit').innerText = todayP.toFixed(0);
+            document.getElementById('monthProfit').innerText = monthP.toFixed(0);
+        }
+
+        async function generateReport() {
+            const start = document.getElementById('startDate').value;
+            const end = document.getElementById('endDate').value;
+            if (!start || !end) return alert("请选择范围");
+            const { data } = await supabaseClient.from('sales').select('*, products(name)').gte('created_at', `${start}T00:00:00`).lte('created_at', `${end}T23:59:59`);
+            
+            const dateSum = {}, prodSum = {};
+            let totalRangeProfit = 0;
+            data.forEach(s => {
+                const p = s.total - s.cost;
+                const d = new Date(s.created_at).toLocaleDateString('zh-CN').replace(/\//g, '-');
+                dateSum[d] = (dateSum[d] || 0) + p;
+                prodSum[s.products?.name] = (prodSum[s.products?.name] || 0) + p;
+                totalRangeProfit += p;
             });
 
-            document.getElementById('salesTableBody').innerHTML = rows.join('');
-            document.getElementById('todayTotalSum').innerText = todayTotalSum.toLocaleString(undefined, {minimumFractionDigits: 2});
-            document.getElementById('todayProfit').innerText = todayP.toLocaleString(undefined, {minimumFractionDigits: 2});
-            document.getElementById('monthProfit').innerText = monthP.toLocaleString(undefined, {minimumFractionDigits: 2});
+            document.getElementById('reportResult').classList.remove('hidden');
+            document.getElementById('dateReportTotal').innerText = `总利: ￥${totalRangeProfit.toFixed(2)}`;
+            document.getElementById('dateReportBody').innerHTML = Object.entries(dateSum).sort().reverse().map(([d, v]) => `<div class="flex justify-between border-b py-1"><span>${d}</span><span class="font-bold text-green-600">￥${v.toFixed(2)}</span></div>`).join('');
+            document.getElementById('productReportBody').innerHTML = Object.entries(prodSum).sort((a,b)=>b[1]-a[1]).map(([n, v]) => `<div class="flex justify-between border-b py-1"><span>${n}</span><span class="font-bold">￥${v.toFixed(2)}</span></div>`).join('');
         }
 
-        async function deleteSale(saleId) {
-            if (!confirm('确定删除？')) return;
-            const { error } = await supabaseClient.from('sales').delete().eq('id', saleId);
-            if (!error) await loadSales();
-        }
+        async function deleteSale(id) { if (confirm('确定删除？')) { await supabaseClient.from('sales').delete().eq('id', id); loadSales(); } }
 
         document.getElementById('salesForm').onsubmit = async (e) => {
             e.preventDefault();
-            const btn = e.target.querySelector('button');
-            btn.disabled = true;
-
             const { error } = await supabaseClient.from('sales').insert([{
-                product_id: formElements.product.value,
-                quantity: parseInt(formElements.qty.value),
-                cost: parseFloat(formElements.cost.value),
-                total: parseFloat(formElements.total.value)
+                product_id: formElements.product.value, quantity: parseInt(formElements.qty.value),
+                cost: parseFloat(formElements.cost.value), total: parseFloat(formElements.total.value)
             }]);
-
-            if (!error) {
-                e.target.reset();
-                await loadSales();
-            }
-            btn.disabled = false;
+            if (!error) { e.target.reset(); loadSales(); alert("保存成功"); }
         };
 
-        init();
+        checkUser();
     </script>
 </body>
 </html>
