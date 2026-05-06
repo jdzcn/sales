@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>销售管理系统</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
+        
+        /* 现代简约配色 */
+        :root {
+            --primary: #0ea5e9;
+            --primary-dark: #0284c7;
+            --success: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+        }
+        
+        body {
+            background: var(--bg);
+            color: var(--text);
+        }
+        
+        /* 卡片样式 */
+        .card {
+            background: var(--card);
+            border-radius: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05), 0 1px 2px rgba(0,0,0,0.03);
+            border: 1px solid var(--border);
+            transition: box-shadow 0.2s ease;
+        }
+        
+        .card:hover {
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05), 0 2px 4px -1px rgba(0,0,0,0.03);
+        }
+        
+        /* 导航标签 */
+        .nav-tab {
+            position: relative;
+            padding: 14px 24px;
+            font-weight: 500;
+            color: var(--text-muted);
+            transition: all 0.2s ease;
+            border-bottom: 2px solid transparent;
+        }
+        
+        .nav-tab:hover {
+            color: var(--primary);
+        }
+        
+        .nav-tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+        
+        /* 按钮样式 */
+        .btn-primary {
+            background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+            color: white;
+            padding: 14px 28px;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 6px -1px rgba(14, 165, 233, 0.2);
+        }
+        
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 12px -2px rgba(14, 165, 233, 0.3);
+        }
+        
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+        
+        /* 输入框样式 */
+        .input-field {
+            width: 100%;
+            padding: 14px 16px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            background: #fafafa;
+            transition: all 0.2s ease;
+            font-size: 15px;
+        }
+        
+        .input-field:focus {
+            outline: none;
+            border-color: var(--primary);
+            background: white;
+            box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.1);
+        }
+        
+        /* 统计卡片 */
+        .stat-card {
+            background: var(--card);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid var(--border);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+        }
+        
+        .stat-card.blue::before { background: linear-gradient(90deg, #0ea5e9, #38bdf8); }
+        .stat-card.green::before { background: linear-gradient(90deg, #10b981, #34d399); }
+        .stat-card.purple::before { background: linear-gradient(90deg, #8b5cf6, #a78bfa); }
+        
+        .stat-label {
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+        
+        .stat-value {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+        
+        .stat-value.blue { color: var(--primary); }
+        .stat-value.green { color: var(--success); }
+        .stat-value.purple { color: #8b5cf6; }
+        
+        /* 表格样式 */
+        .data-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+        
+        .data-table th {
+            background: #f8fafc;
+            padding: 14px 16px;
+            text-align: left;
+            font-weight: 600;
+            font-size: 13px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .data-table td {
+            padding: 16px;
+            border-bottom: 1px solid var(--border);
+            vertical-align: middle;
+        }
+        
+        .data-table tr:hover td {
+            background: #fafafa;
+        }
+        
+        /* 标签样式 */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        
+        .badge-success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .badge-danger {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        
+        /* 视图切换 */
+        .view-section {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .view-section.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* 登录模态框 */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 40px;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 400px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        }
+        
+        /* 毛利预览 */
+        .profit-preview {
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 18px;
+            transition: all 0.3s ease;
+        }
+        
+        .profit-preview.positive {
+            background: #ecfdf5;
+            color: #065f46;
+            border: 1px solid #a7f3d0;
+        }
+        
+        .profit-preview.negative {
+            background: #fef2f2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+        
+        .profit-preview.neutral {
+            background: #f8fafc;
+            color: var(--text-muted);
+            border: 1px solid var(--border);
+        }
+        
+        /* 响应式 */
+        @media (max-width: 768px) {
+            .stat-value { font-size: 22px; }
+            .nav-tab { padding: 12px 16px; font-size: 14px; }
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+
+    <!-- 登录模块 -->
+    <div id="loginModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <div class="text-center mb-8">
+                <div class="w-16 h-16 bg-gradient-to-br from-sky-400 to-blue-600 rounded-2xl mx-auto mb-4 flex items-center justify-center">
+                    <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                    </svg>
+                </div>
+                <h2 class="text-2xl font-bold text-gray-900">销售管理系统</h2>
+                <p class="text-sm text-gray-500 mt-1">请登录以继续</p>
+            </div>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">邮箱账号</label>
+                    <input type="email" id="email" placeholder="请输入邮箱" class="input-field">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">密码</label>
+                    <input type="password" id="password" placeholder="请输入密码" class="input-field">
+                </div>
+                <button onclick="handleLogin()" id="loginBtn" class="btn-primary w-full mt-6">
+                    登录系统
+                </button>
+            </div>
+            
+            <p id="loginError" class="text-red-500 text-sm mt-4 text-center"></p>
+        </div>
+    </div>
+
+    <!-- 主界面 -->
+    <div id="mainContent" class="hidden">
+        
+        <!-- 顶部导航栏 -->
+        <header class="bg-white border-b sticky top-0 z-40">
+            <div class="max-w-6xl mx-auto px-4 sm:px-6">
+                <!-- Logo 区域 -->
+                <div class="flex items-center justify-between py-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-gradient-to-br from-sky-400 to-blue-600 rounded-xl flex items-center justify-center">
+                            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h1 class="text-lg font-bold text-gray-900">销售管理系统</h1>
+                            <p class="text-xs text-gray-500">Sales Management</p>
+                        </div>
+                    </div>
+                    <button onclick="handleLogout()" class="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                        </svg>
+                        退出
+                    </button>
+                </div>
+                
+                <!-- 统计卡片 -->
+                <div class="grid grid-cols-3 gap-4 pb-4">
+                    <div class="stat-card blue">
+                        <div class="stat-label">今日销售额</div>
+                        <div class="stat-value blue">¥<span id="todayTotalSum">0</span></div>
+                    </div>
+                    <div class="stat-card green">
+                        <div class="stat-label">今日毛利</div>
+                        <div class="stat-value green">¥<span id="todayProfit">0</span></div>
+                    </div>
+                    <div class="stat-card purple">
+                        <div class="stat-label">本月毛利</div>
+                        <div class="stat-value purple">¥<span id="monthProfit">0</span></div>
+                    </div>
+                </div>
+                
+                <!-- 导航标签 -->
+                <nav class="flex border-t">
+                    <button onclick="switchTab('entry')" id="tab-entry" class="nav-tab active flex-1 flex items-center justify-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        销售录入
+                    </button>
+                    <button onclick="switchTab('list')" id="tab-list" class="nav-tab flex-1 flex items-center justify-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                        </svg>
+                        流水明细
+                    </button>
+                    <button onclick="switchTab('report')" id="tab-report" class="nav-tab flex-1 flex items-center justify-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                        </svg>
+                        报表中心
+                    </button>
+                </nav>
+            </div>
+        </header>
+
+        <!-- 主内容区 -->
+        <main class="max-w-6xl mx-auto px-4 sm:px-6 py-6">
+            
+            <!-- 1. 录入视图 -->
+            <section id="view-entry" class="view-section active">
+                <div class="card p-6 sm:p-8">
+                    <div class="flex items-center gap-3 mb-6">
+                        <div class="w-10 h-10 bg-sky-100 rounded-lg flex items-center justify-center">
+                            <svg class="w-5 h-5 text-sky-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <h2 class="text-lg font-bold text-gray-900">销售录入</h2>
+                            <p class="text-sm text-gray-500">记录新的销售订单</p>
+                        </div>
+                    </div>
+                    
+                    <form id="salesForm" class="space-y-5">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">选择产品</label>
+                            <select id="productSelect" class="input-field" required>
+                                <option value="">请选择产品...</option>
+                            </select>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">销售数量</label>
+                                <input type="number" id="quantity" min="1" value="1" class="input-field text-center text-xl font-semibold" onfocus="this.select()">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">总成本 (¥)</label>
+                                <input type="number" id="cost" step="0.01" class="input-field text-center font-semibold bg-orange-50/50" placeholder="0.00">
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">订单总金额 (¥)</label>
+                            <input type="number" id="total" step="0.01" class="input-field text-center text-2xl font-bold bg-sky-50/50" placeholder="0.00">
+                        </div>
+                        
+                        <div id="profitPreview" class="profit-preview neutral">
+                            预期毛利: ¥0.00
+                        </div>
+                        
+                        <button type="submit" class="btn-primary w-full text-lg">
+                            确认提交订单
+                        </button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- 2. 流水视图 -->
+            <section id="view-list" class="view-section">
+                <div class="card overflow-hidden">
+                    <div class="p-6 border-b bg-gray-50/50">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center">
+                                <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h2 class="text-lg font-bold text-gray-900">流水明细</h2>
+                                <p class="text-sm text-gray-500">查看所有销售记录</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="overflow-x-auto">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>产品信息</th>
+                                    <th class="text-center">数量</th>
+                                    <th class="text-right">金额</th>
+                                    <th class="text-right">毛利</th>
+                                    <th class="text-center">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="salesTableBody">
+                                <!-- 动态生成 -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 3. 报表视图 -->
+            <section id="view-report" class="view-section">
+                <div class="space-y-6">
+                    <!-- 查询条件 -->
+                    <div class="card p-6">
+                        <div class="flex items-center gap-3 mb-4">
+                            <div class="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
+                                <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h2 class="text-lg font-bold text-gray-900">报表中心</h2>
+                                <p class="text-sm text-gray-500">时间段销售数据分析</p>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">开始日期</label>
+                                <input type="date" id="startDate" class="input-field">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">结束日期</label>
+                                <input type="date" id="endDate" class="input-field">
+                            </div>
+                        </div>
+                        <button onclick="generateReport()" class="btn-primary w-full">
+                            生成报表
+                        </button>
+                    </div>
+                    
+                    <!-- 报表结果 -->
+                    <div id="reportResult" class="hidden space-y-6">
+                        <!-- 日期汇总 -->
+                        <div class="card p-6">
+                            <div class="flex items-center justify-between mb-4 pb-4 border-b">
+                                <h3 class="font-bold text-gray-900 flex items-center gap-2">
+                                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                    </svg>
+                                    日期汇总
+                                </h3>
+                                <span id="dateReportTotal" class="text-lg font-bold text-emerald-600"></span>
+                            </div>
+                            <div id="dateReportBody" class="space-y-3">
+                                <!-- 动态生成 -->
+                            </div>
+                        </div>
+                        
+                        <!-- 月度汇总 -->
+                        <div class="card p-6">
+                            <div class="flex items-center justify-between mb-4 pb-4 border-b">
+                                <h3 class="font-bold text-gray-900 flex items-center gap-2">
+                                    <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+                                    </svg>
+                                    月度汇总
+                                </h3>
+                                <span id="monthReportTotal" class="text-sm font-medium text-gray-500"></span>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full text-sm">
+                                    <thead>
+                                        <tr class="border-b">
+                                            <th class="text-left py-2 px-3 text-gray-500 font-semibold text-xs uppercase">月份</th>
+                                            <th class="text-right py-2 px-3 text-gray-500 font-semibold text-xs uppercase">销售额</th>
+                                            <th class="text-right py-2 px-3 text-gray-500 font-semibold text-xs uppercase">成本</th>
+                                            <th class="text-right py-2 px-3 text-gray-500 font-semibold text-xs uppercase">毛利</th>
+                                            <th class="text-right py-2 px-3 text-gray-500 font-semibold text-xs uppercase">利润率</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="monthReportBody">
+                                        <!-- 动态生成 -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- 产品排行 -->
+                        <div class="card p-6">
+                            <h3 class="font-bold text-gray-900 mb-4 pb-4 border-b flex items-center gap-2">
+                                <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
+                                </svg>
+                                产品毛利排行
+                            </h3>
+                            <div id="productReportBody" class="space-y-3">
+                                <!-- 动态生成 -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        // Supabase 配置
+        const SUPABASE_URL = "https://dannrjpyjxuptpkitznd.supabase.co";
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRhbm5yanB5anh1cHRwa2l0em5kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzc1OTA3MTMsImV4cCI6MjA5MzE2NjcxM30.i4bWHW-qM2oiXHSNQEv1v89pb7wtLDJZVQ9ib9vGM7w";
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+        const formElements = {
+            product: document.getElementById('productSelect'),
+            qty: document.getElementById('quantity'),
+            cost: document.getElementById('cost'),
+            total: document.getElementById('total'),
+            preview: document.getElementById('profitPreview')
+        };
+
+        // --- 视图切换 ---
+        function switchTab(tabId) {
+            document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
+            
+            document.getElementById('view-' + tabId).classList.add('active');
+            document.getElementById('tab-' + tabId).classList.add('active');
+            
+            if (tabId === 'list') loadSales();
+        }
+
+        // --- 权限逻辑 ---
+        async function checkUser() {
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (session) {
+                document.getElementById('loginModal').classList.add('hidden');
+                document.getElementById('mainContent').classList.remove('hidden');
+                init();
+            } else {
+                document.getElementById('loginModal').classList.remove('hidden');
+                document.getElementById('mainContent').classList.add('hidden');
+            }
+        }
+
+        async function handleLogin() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
+            if (error) {
+                document.getElementById('loginError').textContent = "登录失败：" + error.message;
+            } else {
+                checkUser();
+            }
+        }
+
+        async function handleLogout() { 
+            await supabaseClient.auth.signOut(); 
+            checkUser(); 
+        }
+
+        // --- 业务逻辑 ---
+        async function init() {
+            const { data } = await supabaseClient.from('products').select('*');
+            formElements.product.innerHTML = '<option value="">请选择产品...</option>' + 
+                data.map(p => `<option value="${p.id}" data-price="${p.price}" data-cost="${p.cost}">${p.name}</option>`).join('');
+            loadSales();
+        }
+
+        function updateCalculations() {
+            const p = (parseFloat(formElements.total.value) || 0) - (parseFloat(formElements.cost.value) || 0);
+            formElements.preview.innerText = `预期毛利: ¥${p.toFixed(2)}`;
+            
+            formElements.preview.classList.remove('positive', 'negative', 'neutral');
+            if (p > 0) {
+                formElements.preview.classList.add('positive');
+            } else if (p < 0) {
+                formElements.preview.classList.add('negative');
+            } else {
+                formElements.preview.classList.add('neutral');
+            }
+        }
+
+        formElements.qty.oninput = () => {
+            const opt = formElements.product.options[formElements.product.selectedIndex];
+            if (opt && opt.value) {
+                const q = parseInt(formElements.qty.value) || 0;
+                formElements.cost.value = (parseFloat(opt.dataset.cost) * q).toFixed(2);
+                formElements.total.value = (parseFloat(opt.dataset.price) * q).toFixed(2);
+                updateCalculations();
+            }
+        };
+        
+        formElements.product.onchange = () => { 
+            if(formElements.product.value) { 
+                formElements.qty.value = 1; 
+                formElements.qty.oninput(); 
+            } 
+        };
+        
+        [formElements.cost, formElements.total].forEach(el => el.oninput = updateCalculations);
+
+        async function loadSales() {
+            const firstDay = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString();
+            const todayStr = new Date().toLocaleDateString('zh-CN').replace(/\//g, '-');
+            const { data, error } = await supabaseClient.from('sales').select('*, products(name)').gte('created_at', firstDay).order('created_at', { ascending: false });
+            if (error) return;
+
+            let todaySum = 0, todayP = 0, monthP = 0;
+            const rows = data.map(sale => {
+                const profit = sale.total - sale.cost;
+                const saleDate = new Date(sale.created_at);
+                const saleDay = saleDate.toLocaleDateString('zh-CN').replace(/\//g, '-');
+                if (saleDay === todayStr) { todaySum += sale.total; todayP += profit; }
+                monthP += profit;
+
+                return `<tr>
+                    <td>
+                        <div class="font-semibold text-gray-900">${sale.products?.name}</div>
+                        <div class="text-xs text-gray-400">${saleDate.toLocaleString('zh-CN',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit'})}</div>
+                    </td>
+                    <td class="text-center">
+                        <span class="inline-flex items-center justify-center w-8 h-8 bg-gray-100 rounded-full font-semibold text-gray-700">${sale.quantity}</span>
+                    </td>
+                    <td class="text-right">
+                        <div class="font-semibold text-gray-900">¥${sale.total.toFixed(2)}</div>
+                    </td>
+                    <td class="text-right">
+                        <span class="badge ${profit>=0?'badge-success':'badge-danger'}">
+                            ${profit>=0?'+':''}¥${profit.toFixed(2)}
+                        </span>
+                    </td>
+                    <td class="text-center">
+                        <button onclick="deleteSale(${sale.id})" class="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                            </svg>
+                        </button>
+                    </td>
+                </tr>`;
+            });
+            document.getElementById('salesTableBody').innerHTML = rows.join('');
+            document.getElementById('todayTotalSum').innerText = todaySum.toFixed(0);
+            document.getElementById('todayProfit').innerText = todayP.toFixed(0);
+            document.getElementById('monthProfit').innerText = monthP.toFixed(0);
+        }
+
+        async function generateReport() {
+            const start = document.getElementById('startDate').value;
+            const end = document.getElementById('endDate').value;
+            if (!start || !end) return alert("请选择查询日期范围");
+            
+            const { data } = await supabaseClient.from('sales').select('*, products(name)').gte('created_at', `${start}T00:00:00`).lte('created_at', `${end}T23:59:59`);
+            
+            const dateSum = {}, prodSum = {}, monthSum = {};
+            let totalRangeProfit = 0, totalRangeSales = 0;
+            data.forEach(s => {
+                const p = s.total - s.cost;
+                const d = new Date(s.created_at).toLocaleDateString('zh-CN').replace(/\//g, '-');
+                dateSum[d] = (dateSum[d] || 0) + p;
+                prodSum[s.products?.name] = (prodSum[s.products?.name] || 0) + p;
+                totalRangeProfit += p;
+                totalRangeSales += s.total;
+
+                // 按月聚合
+                const dt = new Date(s.created_at);
+                const monthKey = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}`;
+                if (!monthSum[monthKey]) monthSum[monthKey] = { sales: 0, cost: 0, profit: 0 };
+                monthSum[monthKey].sales += s.total;
+                monthSum[monthKey].cost += s.cost;
+                monthSum[monthKey].profit += p;
+            });
+
+            document.getElementById('reportResult').classList.remove('hidden');
+            document.getElementById('dateReportTotal').innerText = `总毛利: ¥${totalRangeProfit.toFixed(2)}`;
+            
+            document.getElementById('dateReportBody').innerHTML = Object.entries(dateSum).sort().reverse().map(([d, v]) => `
+                <div class="flex items-center justify-between py-3 border-b last:border-0">
+                    <span class="text-gray-600">${d}</span>
+                    <span class="font-semibold text-emerald-600">¥${v.toFixed(2)}</span>
+                </div>
+            `).join('');
+
+            // 月度汇总渲染
+            const monthCount = Object.keys(monthSum).length;
+            document.getElementById('monthReportTotal').innerText = `共 ${monthCount} 个月`;
+            document.getElementById('monthReportBody').innerHTML = Object.entries(monthSum).sort((a,b) => b[0].localeCompare(a[0])).reverse().map(([m, v]) => {
+                const rate = v.sales > 0 ? (v.profit / v.sales * 100).toFixed(1) : '0.0';
+                return `<tr class="border-b last:border-0 hover:bg-gray-50">
+                    <td class="py-3 px-3 font-semibold text-gray-800">${m}</td>
+                    <td class="py-3 px-3 text-right text-gray-700">¥${v.sales.toFixed(2)}</td>
+                    <td class="py-3 px-3 text-right text-gray-500">¥${v.cost.toFixed(2)}</td>
+                    <td class="py-3 px-3 text-right"><span class="badge ${v.profit >= 0 ? 'badge-success' : 'badge-danger'}">${v.profit >= 0 ? '+' : ''}¥${v.profit.toFixed(2)}</span></td>
+                    <td class="py-3 px-3 text-right font-semibold ${parseFloat(rate) >= 0 ? 'text-emerald-600' : 'text-red-500'}">${rate}%</td>
+                </tr>`;
+            }).join('');
+            
+            document.getElementById('productReportBody').innerHTML = Object.entries(prodSum).sort((a,b)=>b[1]-a[1]).map(([n, v], index) => `
+                <div class="flex items-center justify-between py-3 border-b last:border-0">
+                    <div class="flex items-center gap-3">
+                        <span class="w-6 h-6 ${index < 3 ? 'bg-amber-100 text-amber-600' : 'bg-gray-100 text-gray-500'} rounded-full flex items-center justify-center text-xs font-bold">${index + 1}</span>
+                        <span class="text-gray-700">${n}</span>
+                    </div>
+                    <span class="font-semibold text-gray-900">¥${v.toFixed(2)}</span>
+                </div>
+            `).join('');
+        }
+
+        async function deleteSale(id) { 
+            if (confirm('确定删除这条销售记录吗？')) { 
+                await supabaseClient.from('sales').delete().eq('id', id); 
+                loadSales(); 
+            } 
+        }
+
+        document.getElementById('salesForm').onsubmit = async (e) => {
+            e.preventDefault();
+            const { error } = await supabaseClient.from('sales').insert([{
+                product_id: formElements.product.value, 
+                quantity: parseInt(formElements.qty.value),
+                cost: parseFloat(formElements.cost.value), 
+                total: parseFloat(formElements.total.value)
+            }]);
+            if (!error) { 
+                e.target.reset(); 
+                loadSales(); 
+                alert("订单保存成功！"); 
+            }
+        };
+
+        checkUser();
+    </script>
+</body>
+</html>
