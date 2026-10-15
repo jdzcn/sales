@@ -6,7 +6,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>管家婆 (Supabase版)</title>
         <link rel="stylesheet" type="text/css" href="default_full.css">
-        <link rel="stylesheet" type="text/css" href="header_black.css">
+            <!--<link rel="stylesheet" type="text/css" href="header_black.css">-->
         <link rel="stylesheet" type="text/css" href="lightform.css">
         <link rel="stylesheet" type="text/css" href="sidebar.css">
         <link rel="stylesheet" type="text/css" href="snackbar.css">
@@ -58,14 +58,15 @@
         }
     </style>
     <body>
+    <!--
         <header>
             <h3>
                 <span onclick="document.getElementById('sidebar_left').style.width='360px'">&#9776;&nbsp;</span>
                 <span onclick="updatedata()"><script type="text/javascript">document.write(document.title)</script></span>
             </h3>
         </header>
+    -->
 
-        <main>
             <article>
                 <ul id="salelist"></ul>
             </article>
@@ -115,8 +116,9 @@
         <div id="dialog" class="dialog">
             <span class="close" onclick="this.parentElement.style.display = 'none';">&times;</span>
         </div>
+        <button onclick="document.getElementById('sidebar_left').style.width='360px'" class="float_button_top" id="sum_button" title="sum_bitton">&#9776;</button>
+        <button onclick="document.getElementById('sidebar_right').style.width='360px'" class="float_button_bottom" id="add" title="add">&#43;</button>
 
-        <button onclick="document.getElementById('sidebar_right').style.width='360px'" class="float_button" id="add" title="add">&#43;</button>
         <div id="snackbar"></div>
 
         <script type="text/javascript">
