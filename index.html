@@ -230,7 +230,7 @@
                     let li = document.createElement("li");
                     let div = document.createElement("div");
                     let d = document.createElement("p");
-                    d.innerHTML = item.date;
+                    d.innerHTML = item.date.substring(0, 10);
 
                     let a = document.createElement("a");
                     a.href = "#";
@@ -408,7 +408,7 @@
             function renderDailySummary(container, data) {
                 let map = {};
                 for (let row of data) {
-                    let date = row.date;
+                    let date = row.date.substring(0, 10);
                     if (!map[date]) map[date] = { date, count: 0, total_amount: 0, total_profit: 0 };
                     map[date].count += 1;
                     map[date].total_amount += row.amount;
@@ -456,7 +456,7 @@
                     let productName = row.product ? row.product.name : '未分类';
                     var li = document.createElement("li");
                     var div = document.createElement("div");
-                    var d = document.createElement("p"); d.innerHTML = row.date;
+                    var d = document.createElement("p"); d.innerHTML = row.date.substring(0, 10);
                     var a = document.createElement("a"); a.href = "#"; a.setAttribute("onclick","delrec(" + row.id + ")"); a.setAttribute("style","float:right;"); a.innerHTML = "删除"; d.appendChild(a);
                     var h = document.createElement("h4"); h.innerHTML = productName;
                     var p = document.createElement("h5"); p.setAttribute('style',"float:right;");
