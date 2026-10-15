@@ -5,7 +5,7 @@
 
   position: fixed; /* Fixed/sticky position */
   /* bottom: 50px; Place the button at the bottom of the page */
-  /*right: 20px;  Place the button 30px from the right */
+  right: 20px;  /*Place the button 30px from the right */
   /*z-index: 1;  Make sure it does not overlap */
   border: none; /* Remove borders */
   outline: none; /* Remove outline */
@@ -25,5 +25,5 @@
   background-color: #555; /* Add a dark-grey background on hover */
 }
 
-.float_button_bottom {bottom: 50px;right: 20px;}
-.float_button_top {bottom: 50px;left: 20px;}
+.float_button_bottom {bottom: 50px;}
+.float_button_top {bottom: 150px;}
