@@ -6,6 +6,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>管家婆 (Supabase版)</title>
         <link rel="stylesheet" type="text/css" href="default_full.css">
+            <!--<link rel="stylesheet" type="text/css" href="header_black.css">-->
         <link rel="stylesheet" type="text/css" href="lightform.css">
         <link rel="stylesheet" type="text/css" href="sidebar.css">
         <link rel="stylesheet" type="text/css" href="snackbar.css">
@@ -55,103 +56,42 @@
         h5 {
             font-size: 19px;
         }
-
-        /* ===== 现代风格顶部汇总栏 ===== */
-        #top_summary {
-            display: flex;
-            flex-wrap: wrap; /* 移动端自动换行 */
-            align-items: center;
-            justify-content: space-between;
-            padding: 14px 20px;
-            background: #ffffff;
-            /* 优雅的底部阴影，模拟卡片悬浮感 */
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
-            border-bottom: 1px solid #f1f5f9;
-            /* 底部圆角 */
-            border-bottom-left-radius: 16px;
-            border-bottom-right-radius: 16px;
-            position: sticky;
-            top: 0;
-            z-index: 100;
-            gap: 10px;
-        }
-
-        /* 标题样式 */
-        #top_summary .title {
-            font-size: 20px;
-            font-weight: 800;
-            color: #1e293b;
-            cursor: pointer;
-            letter-spacing: 1px;
-            transition: all 0.2s ease;
-        }
-        #top_summary .title:hover {
-            color: #3b82f6;
-            transform: scale(1.05);
-        }
-
-        /* 统计项容器样式（药丸形状） */
-        #top_summary .stat {
-            display: flex;
-            align-items: center;
-            background: #f8fafc;
-            padding: 6px 14px;
-            border-radius: 20px;
-            border: 1px solid #e2e8f0;
-            font-size: 13px;
-            color: #64748b;
-            white-space: nowrap;
-            transition: background 0.2s;
-        }
-        #top_summary .stat:hover {
-            background: #f1f5f9;
-        }
-
-        /* 数字部分的高亮配色 */
-        #top_summary .stat span {
-            margin-left: 6px;
-            font-weight: 700;
-            font-size: 15px;
-        }
-        /* 本日合计 - 现代红 */
-        #today_amount {
-            color: #ef4444;
-        }
-        /* 本日毛利 - 现代绿 */
-        #today_profit {
-            color: #10b981;
-        }
-        /* 本月毛利 - 现代蓝 */
-        #month_profit {
-            color: #3b82f6;
-        }
     </style>
     <body>
-        <article>
-            <!-- 顶部汇总栏，现代化卡片设计 -->
-            <div id="top_summary">
-                <span class="title" onclick="updatedata()">管家婆</span>
-                <div class="stats-container" style="display: flex; gap: 8px; flex-wrap: wrap;">
-                    <span class="stat">本日合计：<span id="today_amount">0.00</span></span>
-                    <span class="stat">本日毛利：<span id="today_profit">0.00</span></span>
-                    <span class="stat">本月毛利：<span id="month_profit">0.00</span></span>
-                </div>
-            </div>
-            <ul id="salelist"></ul>
-        </article>
+    <!--
+        <header>
+            <h3>
+                <span onclick="document.getElementById('sidebar_left').style.width='360px'">&#9776;&nbsp;</span>
+                <span onclick="updatedata()"><script type="text/javascript">document.write(document.title)</script></span>
+            </h3>
+        </header>
+    -->
 
-        <div id="sidebar_left" class="sidebar_left">
-            <span class="close" onclick="this.parentElement.style.width = '0';">&times;</span>
-            <form id="find">
-                <fieldset>
-                    <legend>统计设置</legend>
-                    <input type="date" id="start_date" name="start_date">
-                    <input type="date" id="end_date" name="end_date">
-                    <input type="button" value="开始" onclick="sum()">
-                    <input type="button" value="关闭" onclick="document.getElementById('sidebar_left').style.width = '0';">
-                </fieldset>
-            </form>
-        </div>
+            <article>
+                <ul id="salelist"></ul>
+            </article>
+
+            <div id="sidebar_left" class="sidebar_left">
+                <span class="close" onclick="this.parentElement.style.width = '0';">&times;</span>
+                <form id="find">
+                    <fieldset>
+                        <legend>统计设置</legend>
+                        <input type="date" id="start_date" name="start_date">
+                        <input type="date" id="end_date" name="end_date">
+
+                        <select id="find_style">
+                            <option value="monthly">月汇总表</option>
+                            <option value="daily">日汇总表</option>
+                            <option value="product">商品汇总表</option>
+                            <option value="list">明细表</option>
+                        </select>
+
+                        <input type="button" value="开始" onclick="sum()">
+                        <input type="button" value="关闭" onclick="document.getElementById('sidebar_left').style.width = '0';">
+                    </fieldset>
+                </form>
+            </div>
+        </main>
 
         <div id="sidebar_right" class="sidebar_right">
             <span class="close" onclick="this.parentElement.style.width = '0';">&times;</span>
@@ -199,7 +139,6 @@
             window.onload = function() {
                 uppd();
                 updatedata();
-                loadSummary(); // 页面加载时计算顶部汇总
             };
 
             // 1. 获取商品列表填充下拉框
@@ -260,6 +199,7 @@
 
             // 2. 加载销售明细列表 (带商品名称关联)
             async function updatedata() {
+                // 使用 Supabase 联表查询：获取 sale 记录，并内联查询 product 表的 name
                 const { data: jsonstr, error } = await supabaseClient
                     .from('sale')
                     .select(`
@@ -275,7 +215,7 @@
                     `)
                     .order('date', { ascending: false })
                     .order('id', { ascending: false })
-                    .limit(20);
+                    .limit(20); // 默认显示最近50条，可按需调整
 
                 if (error) {
                     console.error('获取销售列表失败:', error);
@@ -294,7 +234,14 @@
                     let div = document.createElement("div");
                     let d = document.createElement("p");
                     d.innerHTML = item.date.substring(0, 10);
-
+                    /*
+                    let a = document.createElement("a");
+                    a.href = "#";
+                    a.setAttribute("onclick", "delrec(" + item.id + ")");
+                    a.setAttribute("style", "float:right");
+                    a.innerHTML = "删除";
+                    d.appendChild(a);
+                     */
                     let h = document.createElement("h4");
                     h.innerHTML = productName;
 
@@ -314,46 +261,6 @@
                     li.appendChild(div);
                     myul.appendChild(li);
                 }
-            }
-
-            // 6. 计算并显示顶部汇总（本日合计、本日毛利、本月毛利）
-            async function loadSummary() {
-                const todayStr = new Date().toISOString().substring(0, 10);
-                const monthStartStr = new Date().toISOString().substring(0, 8) + "01";
-
-                // 查询本月至今的数据
-                const { data, error } = await supabaseClient
-                    .from('sale')
-                    .select('date, amount, cost')
-                    .gte('date', monthStartStr);
-
-                if (error) {
-                    console.error('获取汇总数据失败:', error);
-                    return;
-                }
-
-                let todayAmount = 0;
-                let todayProfit = 0;
-                let monthProfit = 0;
-
-                for (let row of data) {
-                    let profit = row.amount - row.cost;
-                    let dateStr = row.date.substring(0, 10);
-
-                    // 本月毛利累加
-                    monthProfit += profit;
-
-                    // 本日数据累加
-                    if (dateStr === todayStr) {
-                        todayAmount += row.amount;
-                        todayProfit += profit;
-                    }
-                }
-
-                // 更新 DOM
-                document.getElementById('today_amount').innerText = todayAmount.toFixed(2);
-                document.getElementById('today_profit').innerText = todayProfit.toFixed(2);
-                document.getElementById('month_profit').innerText = monthProfit.toFixed(2);
             }
 
             // 3. 提交新销售单
@@ -384,7 +291,6 @@
                 } else {
                     document.getElementById('sidebar_right').style.width = '0';
                     updatedata();
-                    loadSummary(); // 提交后刷新顶部汇总
                     show_msg("更新成功！");
                 }
             }
@@ -401,7 +307,6 @@
                         alert('删除失败: ' + error.message);
                     } else {
                         updatedata();
-                        loadSummary(); // 删除后刷新顶部汇总
                         show_msg("删除成功！");
                     }
                 }
@@ -411,6 +316,7 @@
             async function sum() {
                 var start_date = document.getElementById('start_date').value;
                 var end_date = document.getElementById('end_date').value;
+                var type = document.getElementById('find_style').value;
 
                 if (!start_date || !end_date) {
                     alert('请选择统计起止日期');
@@ -419,6 +325,7 @@
 
                 document.getElementById('sidebar_left').style.width = '0';
 
+                // 获取日期范围内的明细，然后在前端进行聚合计算
                 const { data, error } = await supabaseClient
                     .from('sale')
                     .select(`
@@ -447,19 +354,20 @@
                 var headerLi = document.createElement("li");
                 headerLi.setAttribute('style', "height:30px;background:#f0f0f0;font-weight:bold;");
                 var headerText = document.createElement("span");
-                headerText.innerHTML = "统计区间：" + start_date + " 至 " + end_date;
+                headerText.innerHTML = "统计区间：" + start_date + " 至 " + end_date + "  |  " + getTypeName(type);
                 headerLi.appendChild(headerText);
                 myul.appendChild(headerLi);
 
-                // 按新顺序渲染
-                addSectionTitle(myul, "【月汇总表】");
-                renderMonthlySummary(myul, data);
-
-                addSectionTitle(myul, "【商品汇总表】");
-                renderProductSummary(myul, data);
-
-                addSectionTitle(myul, "【日汇总表】");
-                renderDailySummary(myul, data);
+                // 根据不同类型进行前端聚合或展示
+                if (type === 'monthly') {
+                    renderMonthlySummary(myul, data);
+                } else if (type === 'daily') {
+                    renderDailySummary(myul, data);
+                } else if (type === 'product') {
+                    renderProductSummary(myul, data);
+                } else {
+                    renderList(myul, data);
+                }
 
                 var backLi = document.createElement("li");
                 backLi.setAttribute('style', "height:30px;border-top:2px solid #ddd;margin-top:10px;");
@@ -472,12 +380,9 @@
                 myul.appendChild(backLi);
             }
 
-            // 新增辅助函数：插入小标题
-            function addSectionTitle(container, title) {
-                var li = document.createElement("li");
-                li.setAttribute('style', "height:30px;line-height:30px;background:#e0f7fa;font-weight:bold;padding-left:10px;margin-top:10px;border-bottom:1px solid #b2ebf2;");
-                li.innerHTML = title;
-                container.appendChild(li);
+            function getTypeName(type) {
+                var names = {'monthly':'月汇总表','daily':'日汇总表','product':'商品汇总表','list':'明细表'};
+                return names[type] || type;
             }
 
             // 聚合函数：月汇总
@@ -489,13 +394,17 @@
                     map[month].total_amount += row.amount;
                     map[month].total_profit += (row.amount - row.cost);
                 }
+                let totalAmount = 0, totalProfit = 0;
                 for (let k in map) {
                     let item = map[k];
                     let li = document.createElement("li");
                     li.setAttribute('style', "height:28px;line-height:28px;border-bottom:1px solid #eee;");
                     li.innerHTML = `<span>${item.month}</span><span style='margin-left:30px;'>销售金额:${formatNum(item.total_amount)}</span><span style='float:right;'>毛利:${formatNum(item.total_profit)}</span>`;
                     container.appendChild(li);
+                    totalAmount += item.total_amount;
+                    totalProfit += item.total_profit;
                 }
+                addTotalRow(container, totalAmount, totalProfit);
             }
 
             // 聚合函数：日汇总
@@ -508,16 +417,20 @@
                     map[date].total_amount += row.amount;
                     map[date].total_profit += (row.amount - row.cost);
                 }
+                let totalAmount = 0, totalProfit = 0;
                 for (let k in map) {
                     let item = map[k];
                     let li = document.createElement("li");
                     li.setAttribute('style', "height:28px;line-height:28px;border-bottom:1px solid #eee;");
                     li.innerHTML = `<span>${item.date}</span><span style='margin-left:30px;color:#888;'>(${item.count}笔)</span><span style='margin-left:10px;'>销售金额:${formatNum(item.total_amount)}</span><span style='float:right;'>毛利:${formatNum(item.total_profit)}</span>`;
                     container.appendChild(li);
+                    totalAmount += item.total_amount;
+                    totalProfit += item.total_profit;
                 }
+                addTotalRow(container, totalAmount, totalProfit);
             }
 
-            // 聚合函数：商品汇总（按毛利降序排列）
+            // 聚合函数：商品汇总
             function renderProductSummary(container, data) {
                 let map = {};
                 for (let row of data) {
@@ -527,20 +440,17 @@
                     map[pName].total_amount += row.amount;
                     map[pName].total_profit += (row.amount - row.cost);
                 }
-
-                let sortedItems = Object.values(map).sort((a, b) => b.total_profit - a.total_profit);
-
-                for (let item of sortedItems) {
+                let totalAmount = 0, totalProfit = 0;
+                for (let k in map) {
+                    let item = map[k];
                     let li = document.createElement("li");
-                    li.setAttribute('style', "height:28px; line-height:28px; border-bottom:1px solid #eee; display:flex; align-items:center; padding: 0 10px;");
-                    li.innerHTML = `
-                        <span style="flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-right: 10px;">${item.productName}</span>
-                        <span style="width: 60px; text-align: right; flex-shrink: 0;">${item.total_number}件</span>
-                        <span style="width: 80px; text-align: right; flex-shrink: 0;">${formatNum(item.total_amount)}</span>
-                        <span style="width: 100px; text-align: right; flex-shrink: 0; color: #d32f2f;">毛利:${formatNum(item.total_profit)}</span>
-                    `;
+                    li.setAttribute('style', "height:28px;line-height:28px;border-bottom:1px solid #eee;");
+                    li.innerHTML = `<span>${item.productName}</span><span style='margin-left:30px;'>${item.total_number}件</span><span style='margin-left:10px;'>${formatNum(item.total_amount)}</span><span style='float:right;'>毛利:${formatNum(item.total_profit)}</span>`;
                     container.appendChild(li);
+                    totalAmount += item.total_amount;
+                    totalProfit += item.total_profit;
                 }
+                addTotalRow(container, totalAmount, totalProfit);
             }
 
             function renderList(container, data) {
@@ -563,6 +473,13 @@
                     emptyLi.innerHTML = "<span style='color:#999;padding:20px;text-align:center;display:block;'>该时间段无销售记录</span>";
                     container.appendChild(emptyLi);
                 }
+            }
+
+            function addTotalRow(container, totalAmount, totalProfit) {
+                var totalLi = document.createElement("li");
+                totalLi.setAttribute('style', "height:32px;line-height:32px;background:#fff8e1;font-weight:bold;border-top:2px solid #ffc107;");
+                totalLi.innerHTML = `<span>合  计</span><span style='margin-left:30px;color:#d32f2f;'>销售总金额:${formatNum(totalAmount)}</span><span style='float:right;color:#2e7d32;'>总毛利:${formatNum(totalProfit)}</span>`;
+                container.appendChild(totalLi);
             }
 
             function formatNum(val) {
