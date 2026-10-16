@@ -230,17 +230,18 @@
                     let productName = item.product ? item.product.name : '未分类';
 
                     let li = document.createElement("li");
+                    li.setAttribute("onclick", "delrec(" + item.id + ")");
                     let div = document.createElement("div");
                     let d = document.createElement("p");
                     d.innerHTML = item.date.substring(0, 10);
-
+                    /*
                     let a = document.createElement("a");
                     a.href = "#";
                     a.setAttribute("onclick", "delrec(" + item.id + ")");
                     a.setAttribute("style", "float:right");
                     a.innerHTML = "删除";
                     d.appendChild(a);
-
+                     */
                     let h = document.createElement("h4");
                     h.innerHTML = productName;
 
